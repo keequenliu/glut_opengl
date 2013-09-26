@@ -1,23 +1,13 @@
 #include "client.h"
 #include "shader.h"
 #include <stdio.h>
-
-//GLfloat g_vertexBufferData[]={-25.0f,-25.0f,0.0f,
-//                              25.0f,-25.0f,0.0f,
-//                              0.0f,25.0f,0.0f
-//                             };
-
-GLfloat g_vertexBufferData[]={-1.0f,-1.0f,0.0f,
-                              1.0f,-1.0f,0.0f,
-                              0.0f,1.0f,0.0f
-                             };
-
+#include <time.h>
+#include <sys/time.h>
 
 Client* Client::s_client=NULL;
 
 Client::Client()
-    :m_vertexArrayID(0)
-    ,m_vertexBuffer(0)
+    :m_model(NULL)
 {
 
 }
@@ -27,12 +17,12 @@ Client::~Client()
 
 }
 
-bool Client::init(int*argc,char ** argv)
+bool Client::init(int*argc,char ** argv,BaseModel *model)
 {
     glutInit(argc,argv);
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_ALPHA );
     glutInitWindowPosition( 100, 100 );
-    glutInitWindowSize( 800, 600 );
+    glutInitWindowSize(1024, 768 );
     glutCreateWindow("glut-opengl");
 
     if(glewInit()!=GLEW_OK)
@@ -42,16 +32,19 @@ bool Client::init(int*argc,char ** argv)
     }
     s_client=this;
     /** init GL **/
-    glClearColor(0.0f,0.0f,0.4f,0.0f);
+    glClearColor(0.2f,0.2f,0.4f,0.0f);
 
     /** register glut method **/
     registerClient();
 
     /** test method **/
-    initVertexBuffer();
-//    g_initVertexBuffer();
+    m_model=model;
+    m_model->load();
+
 #ifdef KEE_SHADER
-    m_programID=Shader::loadShaders("SimpleVertexShader.vertexshader", "SimpleFragmentShader.fragmentshader");
+    m_programID=Shader::loadShaders("vertex.txt", "fragment.txt");
+    m_matrixID=glGetUniformLocation(m_programID,"MVP");
+    projectViewModel();
 #endif
 
     return true;
@@ -69,79 +62,31 @@ void Client::registerClient()
     glutMouseFunc           ( mousebutton );
     glutMotionFunc          ( mousemove );
     glutKeyboardFunc        ( keyboard);
-    //    glutSpecialFunc         (SpecialKeyHandle);
+    glutSpecialFunc         (specialKeyHandle);
+}
+
+void Client::projectViewModel()
+{
+    // Model matrix : an identity matrix (model will be at the origin)
+    glm::mat4 modelMatrix=glm::mat4(1.0f);
+    // Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+    glm::mat4 projectMatrix = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+    // Or, for an ortho camera :
+    //glm::mat4 Projection = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f); // In world coordinates
+
+    // Camera matrix
+    glm::mat4 viewMatrix       = glm::lookAt(
+                glm::vec3(0,1,10), // Camera is at (4,3,3), in World Space
+                glm::vec3(0,0,0), // and looks at the origin
+                glm::vec3(0,1,0)) ; // Head is up (set to 0,-1,0 to look upside-down)
+    // Our ModelViewProjection : multiplication of our 3 matrices
+    m_mvp = projectMatrix * viewMatrix * modelMatrix; // Remember, matrix multiplication is the other way around
+
 }
 
 void Client::release()
 {
-    if(m_vertexBuffer)
-        glDeleteBuffers(1,&m_vertexBuffer);
-    if(m_vertexArrayID)
-        glDeleteVertexArrays(1,&m_vertexArrayID);
-}
-
-
-void Client::initVertexBuffer()
-{
-//    static  GLfloat g_vertexBufferData[]={-1.0f,-1.0f,0.0f,
-//                                          1.0f,-1.0f,0.0f,
-//                                          0.0f, 1.0f,0.0f};
-
-    //    //create verter array (VAO mode)
-    glGenVertexArrays(1,&m_vertexArrayID);
-    glBindVertexArray(m_vertexArrayID);
-
-    //create vertex buffer,copy from memory to GL buffer
-    glGenBuffers(1,&m_vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER,m_vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(g_vertexBufferData),g_vertexBufferData,GL_STATIC_DRAW);
-}
-
-#if 0
-// normal VBO
-void Client::drawVertexBuffer()
-{
-    glEnableClientState(GL_VERTEX_ARRAY);
-
-    glVertexPointer(3,GL_FLOAT,0,0);
-    glDrawArrays(GL_TRIANGLES,0,sizeof(g_vertexBufferData)/sizeof(GLfloat));
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-}
-#else
-
-void Client::drawVertexBuffer()
-{
-
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER,m_vertexBuffer);
-    glVertexAttribPointer(0,        // attribute 0. No particular reason for 0, but must match the layout in the shader.
-                          3,        //size ,one vertex size,x,y,z in here
-                          GL_FLOAT, //type
-                          GL_FALSE, //normalized
-                          0,        //stride
-                          (void *)0 //array buffer offset,start 0
-                          );
-
-    glDrawArrays(GL_TRIANGLES,0,3);
-
-    glDisableVertexAttribArray(0);
-}
-#endif
-
-void Client::drawRect()
-{
-    glBegin(GL_LINES);
-    glVertex2d(-1,-1);
-    glVertex2d(1,1);
-    glEnd();
-
-    glBegin(GL_TRIANGLES);
-    glVertex3d(-1.0f,-1.0f,0.0f);
-    glVertex3d( 1.0f,-1.0f,0.0f);
-    glVertex3d(0.0f, 1.0f,0.0f);
-    glEnd();
-
+    s_client->m_model->release();
 }
 
 
@@ -149,18 +94,33 @@ void Client::drawRect()
 
 void Client::frame()
 {
+    //    time_t tt =time(NULL);
+    //    tm* t=localtime(&tt);
+    //    timeval val;
+    //    struct timezone tz;
+    //    gettimeofday(&val,&tz);
+
+
     glClear(GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT);
 
 #ifdef KEE_SHADER
     //use shader
     glUseProgram(s_client->m_programID);
+    // Send our transformation to the currently bound shader,
+    // in the "MVP" uniform
+    glUniformMatrix4fv(s_client->m_matrixID, 1, GL_FALSE, &s_client->m_mvp[0][0]);
 #endif
+    //变换
+    // Save the matrix state and do the rotations
+//    glPushMatrix();
+    s_client->m_camera.render();
+    s_client->m_model->draw();
 
-    s_client->drawVertexBuffer();
 
-//    s_client->drawRect();
+    // Restore the matrix state
+//    glPopMatrix();
     glutSwapBuffers();
-    //    glutPostRedisplay();
+//    glutPostRedisplay();
 }
 
 void Client::reshape(int width,int height)
@@ -186,10 +146,11 @@ void Client::reshape(int width,int height)
         right	*= aspect;
     }
 
-    glOrtho(left, right, bottom, top, -1.0, 1.0);
+    //    glOrtho(left, right, bottom, top, -1.0, 1.0);
+    gluPerspective(30,aspect,1.0f,-100.0f);
 
     //    double mat[16];
-    //    glGetDoublev(GL_PROJECTION_MATRIX,mat);
+//    glGetDoublev(GL_PROJECTION_MATRIX,mat);
     //    printMat(mat);
 
     glutPostRedisplay();
@@ -198,7 +159,9 @@ void Client::reshape(int width,int height)
 }
 
 void Client::mousebutton( int button, int state, int x, int y )
-{}
+{
+
+}
 
 void Client::mousemove( int x, int y )
 {
@@ -214,7 +177,57 @@ void Client::keyboard( unsigned char key, int x, int y )
         exit(0);
     }
     break;
+    case 'a':
+            s_client->m_camera.rotateY(5.0);
+            break;
+    case 'd':
+            s_client->m_camera.rotateY(-5.0);
+            break;
+    case 'w':
+            s_client->m_camera.moveForwards( -0.1 ) ;
+            break;
+    case 's':
+            s_client->m_camera.moveForwards( 0.1 ) ;
+            break;
+
+    case 'x':
+            s_client->m_camera.rotateX(5.0);
+            break;
+    case 'y':
+            s_client->m_camera.rotateX(-5.0);
+
+            break;
+    case 'c':
+            s_client->m_camera.strafeRight(-0.1);
+
+            break;
+    case 'v':
+            s_client->m_camera.strafeRight(0.1);
+
+            break;
+    case 'f':
+            s_client->m_camera.moveUpForwards(-0.3);
+
+            break;
+    case 'r':
+            s_client->m_camera.moveUpForwards(0.3);
+
+            break;
+    case 'm':
+            s_client->m_camera.rotateZ(-5.0);
+            break;
+    case 'n':
+            s_client->m_camera.rotateZ(5.0);
+    case ' ':
+//        s_client->m_camera.reset();
+        break;
     }
+
+    glutPostRedisplay();
+}
+
+void Client::specialKeyHandle(int key, int x, int y )
+{
 }
 
 
