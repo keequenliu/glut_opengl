@@ -180,9 +180,7 @@ void Camera2::rotateZ(GLfloat angle)
 void Camera2::moveForwards(GLfloat distance)
 {
     //注意这里是向z负方向移动，所以要减
-        printf("m_eyePos[x: %f,y: %f,z: %f]\n",m_eyePos.x,m_eyePos.y,m_eyePos.z);
     m_eyePos+=VecMutiValue(m_viewDirectVec,-distance);
-     printf("m_eyePos2[x: %f,y: %f,z: %f]\n",m_eyePos.x,m_eyePos.y,m_eyePos.z);
 }
 
 void Camera2::strafeRight(GLfloat distance)
@@ -192,9 +190,7 @@ void Camera2::strafeRight(GLfloat distance)
 
 void Camera2::moveUpForwards(GLfloat distance)
 {
-    printf("m_eyePos[x: %f,y: %f,z: %f]\n",m_eyePos.x,m_eyePos.y,m_eyePos.z);
     m_eyePos+=VecMutiValue(m_upVec,distance);
-    printf("m_eyePos2[x: %f,y: %f,z: %f]\n",m_eyePos.x,m_eyePos.y,m_eyePos.z);
 }
 
 void Camera2::move(glm::vec3 direct)
