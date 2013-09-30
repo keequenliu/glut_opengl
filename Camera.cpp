@@ -125,7 +125,7 @@ Camera2::Camera2()
 
 void Camera2::setInitPositin(glm::vec3 viewVec, glm::vec3 rightVec, glm::vec3 upVec)
 {
-    m_eyePos=glm::vec3(0.0f,0.0f,0.0f);
+    m_eyePos=glm::vec3(0.0f,0.0f,5.0f);
     m_viewDirectVec=viewVec;
     m_rightVec=rightVec;
     m_upVec=upVec;

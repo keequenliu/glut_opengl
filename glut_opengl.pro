@@ -18,7 +18,8 @@ HEADERS += \
     Texture.h \
     Camera.h \
     GridLine.h \
-    Cube.h
+    Cube.h \
+    bitconvert.h
 
 SOURCES += \
     main.cpp \
@@ -30,7 +31,15 @@ SOURCES += \
     Texture.cpp \
     Camera.cpp \
     GridLine.cpp \
-    Cube.cpp
+    Cube.cpp \
+    bitconvert.cpp
 
 LIBS+=-lGL -lglut -lGLEW
 INCLUDEPATH +=/home/liuqijun/keequen/opengl-tutorial-org/external/glm-0.9.4.0
+
+
+FREE_IMAGE_DIR=/home/liuqijun/keequen/FreeImage/Dist
+
+INCLUDEPATH+=$$FREE_IMAGE_DIR
+
+LIBS+=-L$$FREE_IMAGE_DIR -lfreeimage

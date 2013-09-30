@@ -33,6 +33,7 @@ bool Client::init(int*argc,char ** argv,BaseModel *model)
     s_client=this;
     /** init GL **/
     glClearColor(0.2f,0.2f,0.4f,0.0f);
+    glEnable(GL_TEXTURE_2D);
 
     /** register glut method **/
     registerClient();
@@ -101,6 +102,7 @@ void Client::frame()
     //    gettimeofday(&val,&tz);
 
 
+
     glClear(GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT);
 
 #ifdef KEE_SHADER
@@ -112,15 +114,15 @@ void Client::frame()
 #endif
     //变换
     // Save the matrix state and do the rotations
-//    glPushMatrix();
+    //    glPushMatrix();
     s_client->m_camera.render();
+
+
+    glPushMatrix();
+    glTranslatef(0.0,0.0f,-20.0f);
     s_client->m_model->draw();
-
-
-    // Restore the matrix state
-//    glPopMatrix();
     glutSwapBuffers();
-//    glutPostRedisplay();
+    glutPostRedisplay();
 }
 
 void Client::reshape(int width,int height)
@@ -146,11 +148,11 @@ void Client::reshape(int width,int height)
         right	*= aspect;
     }
 
-    //    glOrtho(left, right, bottom, top, -1.0, 1.0);
-    gluPerspective(30,aspect,1.0f,-100.0f);
+    //        glOrtho(left, right, bottom, top, -1.0, 1.0);
+    gluPerspective(45,aspect,1.0f,-10000.0f);
 
     //    double mat[16];
-//    glGetDoublev(GL_PROJECTION_MATRIX,mat);
+    //    glGetDoublev(GL_PROJECTION_MATRIX,mat);
     //    printMat(mat);
 
     glutPostRedisplay();
@@ -177,49 +179,52 @@ void Client::keyboard( unsigned char key, int x, int y )
         exit(0);
     }
     break;
+    case '1':
+        s_client->m_model->setWireMode();
+        break;
     case 'a':
-            s_client->m_camera.rotateY(5.0);
-            break;
+        s_client->m_camera.rotateY(5.0);
+        break;
     case 'd':
-            s_client->m_camera.rotateY(-5.0);
-            break;
+        s_client->m_camera.rotateY(-5.0);
+        break;
     case 'w':
-            s_client->m_camera.moveForwards( -0.1 ) ;
-            break;
+        s_client->m_camera.moveForwards( -0.1 ) ;
+        break;
     case 's':
-            s_client->m_camera.moveForwards( 0.1 ) ;
-            break;
+        s_client->m_camera.moveForwards( 0.1 ) ;
+        break;
 
     case 'x':
-            s_client->m_camera.rotateX(5.0);
-            break;
+        s_client->m_camera.rotateX(5.0);
+        break;
     case 'y':
-            s_client->m_camera.rotateX(-5.0);
+        s_client->m_camera.rotateX(-5.0);
 
-            break;
+        break;
     case 'c':
-            s_client->m_camera.strafeRight(-0.1);
+        s_client->m_camera.strafeRight(-0.1);
 
-            break;
+        break;
     case 'v':
-            s_client->m_camera.strafeRight(0.1);
+        s_client->m_camera.strafeRight(0.1);
 
-            break;
+        break;
     case 'f':
-            s_client->m_camera.moveUpForwards(-0.3);
+        s_client->m_camera.moveUpForwards(-0.3);
 
-            break;
+        break;
     case 'r':
-            s_client->m_camera.moveUpForwards(0.3);
+        s_client->m_camera.moveUpForwards(0.3);
 
-            break;
+        break;
     case 'm':
-            s_client->m_camera.rotateZ(-5.0);
-            break;
+        s_client->m_camera.rotateZ(-5.0);
+        break;
     case 'n':
-            s_client->m_camera.rotateZ(5.0);
+        s_client->m_camera.rotateZ(5.0);
     case ' ':
-//        s_client->m_camera.reset();
+        //        s_client->m_camera.reset();
         break;
     }
 

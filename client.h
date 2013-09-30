@@ -9,6 +9,7 @@
 
 #include "BaseModel.h"
 #include "Camera.h"
+#include "Texture.h"
 
 class Client
 {
