@@ -42,6 +42,12 @@ private:
     static Client* s_client;
 
     Camera2 m_camera;
+
+    bool m_mouseLeftPressed;
+    float angle_x;
+    float angle_y;
+    int pos_x;
+    int pos_y;
 };
 
 #endif // CLIENT_H

@@ -48,6 +48,9 @@ bool Client::init(int*argc,char ** argv,BaseModel *model)
     projectViewModel();
 #endif
 
+    angle_x=0.0f;
+    angle_y=0.0f;
+
     return true;
 }
 
@@ -95,13 +98,6 @@ void Client::release()
 
 void Client::frame()
 {
-    //    time_t tt =time(NULL);
-    //    tm* t=localtime(&tt);
-    //    timeval val;
-    //    struct timezone tz;
-    //    gettimeofday(&val,&tz);
-
-
 
     glClear(GL_COLOR_BUFFER_BIT |GL_DEPTH_BUFFER_BIT);
 
@@ -120,6 +116,8 @@ void Client::frame()
 
     glPushMatrix();
     glTranslatef(0.0,0.0f,-20.0f);
+    glRotatef(s_client->angle_x,1.0,0.0,0.0);
+    glRotatef(s_client->angle_y,0.0,1.0,0.0);
     s_client->m_model->draw();
     glutSwapBuffers();
     glutPostRedisplay();
@@ -160,13 +158,30 @@ void Client::reshape(int width,int height)
     glLoadIdentity();
 }
 
+/** button 0 left **/
 void Client::mousebutton( int button, int state, int x, int y )
 {
+    if(button ==0)
+    {
+        s_client->m_mouseLeftPressed=true;
+        //        pos_x=x;
+        //        pos_y=y;
 
+        //temp
+
+    }
+    else
+    {
+        s_client->m_mouseLeftPressed=false;
+    }
 }
 
 void Client::mousemove( int x, int y )
 {
+    if(s_client->m_mouseLeftPressed)
+    {
+        //        int deltaX=x-pos_x;
+    }
 
 }
 void Client::keyboard( unsigned char key, int x, int y )
@@ -180,6 +195,12 @@ void Client::keyboard( unsigned char key, int x, int y )
     }
     break;
     case '1':
+        s_client->angle_x+=10.0f;
+        break;
+    case '2':
+        s_client->angle_y+=10.0f;
+        break;
+    case 'l':
         s_client->m_model->setWireMode();
         break;
     case 'a':

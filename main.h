@@ -7,5 +7,6 @@
 #include "cubeTriangle.h"
 #include "GridLine.h"
 #include "Cube.h"
+#include "Utility.h"
 
 #endif // MAIN_H
